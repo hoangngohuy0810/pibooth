@@ -8,6 +8,7 @@ import pygame_menu as pgm
 import pygame_vkeyboard as vkb
 import pibooth
 from pibooth import fonts
+from pibooth.camera.opencv import get_cv_camera_choices
 from pibooth.utils import LOGGER, get_event_pos
 from pibooth.config.parser import DEFAULT
 
@@ -67,10 +68,16 @@ def _find(choices, value):
     """
     i = 0
     for val in choices:
-        if val[0] == value:
+        choice_value = val[1] if len(val) > 1 else val[0]
+        if str(choice_value) == str(value):
             return i
         i += 1
     return 0
+
+
+def _selector_values(choices):
+    """Normalize selector choices while preserving display/value pairs."""
+    return [choice if isinstance(choice, tuple) else (choice,) for choice in choices]
 
 
 def _counters(counters):
@@ -154,7 +161,15 @@ class PiConfigMenu(object):
                                          section=section,
                                          option=name)
                 else:
-                    values = [(v,) for v in option[3]]
+                    choices = option[3]
+                    if section == 'CAMERA' and name == 'opencv_port':
+                        choices = get_cv_camera_choices()
+                        configured_port = self.cfg.get(section, name)
+                        if _find(_selector_values(choices), configured_port) == 0 and \
+                                all(str(choice[1]) != str(configured_port) for choice in choices):
+                            choices.append(("Unavailable camera ({})".format(configured_port),
+                                            configured_port))
+                    values = _selector_values(choices)
                     menu.add.selector(title,
                                       values,
                                       onchange=self._on_selector_changed,
@@ -228,11 +243,13 @@ class PiConfigMenu(object):
                     selected.set_value(text)
                 selected.change()
 
-    def _on_selector_changed(self, value, **kwargs):
+    def _on_selector_changed(self, value, *args, **kwargs):
         """Called after each option changed.
         """
         if self._main_menu.is_enabled():  # Menu may have been closed
-            self.cfg.set(kwargs['section'], kwargs['option'], str(value[0][0]))
+            selected = value[0]
+            selected_value = selected[1] if len(selected) > 1 else selected[0]
+            self.cfg.set(kwargs['section'], kwargs['option'], str(selected_value))
             self._changed = True
 
     def _on_text_changed(self, value, **kwargs):

@@ -266,6 +266,14 @@ class PiWindow(object):
         else:
             self._update_background(background.ChosenBackground(choices, selected))
 
+    def show_template(self, preview, name, index, total):
+        """Show one picture-template preview and its navigation controls."""
+        self._capture_number = (0, self._capture_number[1])
+        if self._current_foreground:
+            self._buffered_images.pop(id(self._current_foreground[0]), None)
+            self._current_foreground = None
+        self._update_background(background.TemplateBackground(preview, name, index, total))
+
     def show_image(self, pil_image=None, pos=CENTER):
         """Show PIL image as it (no resize).
         """

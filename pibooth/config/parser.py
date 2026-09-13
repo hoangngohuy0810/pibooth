@@ -148,6 +148,14 @@ DEFAULT = odict((
                 (False,
                  "Stop the preview before taking the capture",
                  None, None)),
+            ("always_preview",
+                (True,
+                 "Always show camera live preview in idle/wait state (Smart Mirror mode)",
+                 "Always preview (Mirror mode)", ['True', 'False'])),
+            ("always_preview_text",
+                ("Chạm vào màn hình hoặc bấm Space để chụp",
+                 "Text displayed on top of the live mirror screen",
+                 None, None)),
         ))
      ),
     ("PICTURE",
@@ -204,6 +212,10 @@ DEFAULT = odict((
      ),
     ("CAMERA",
         odict((
+            ("opencv_port",
+                (0,
+                 "OpenCV camera selected in settings (stored as its OpenCV port/index)",
+                 "Camera", [str(i) for i in range(10)])),
             ("iso",
                 (100,
                  "Adjust ISO for lighting issues, can be different for preview and capture (list of integers accepted)",
@@ -212,6 +224,10 @@ DEFAULT = odict((
                 (False,
                  "Flip horizontally the capture",
                  None, None)),
+            ("preview_flip",
+                (True,
+                 "Flip the camera preview horizontally so it behaves like a mirror",
+                 "Flip preview", ['True', 'False'])),
             ("rotation",
                 (0,
                  "Rotation of the camera: 0, 90, 180 or 270, can be different for preview and capture (list of integers accepted)",
@@ -314,7 +330,7 @@ class PiConfigParser(RawConfigParser):
             return path
         path = osp.expanduser(path)
         if not osp.isabs(path):
-            path = osp.join(osp.relpath(osp.dirname(self.filename), '.'), path)
+            path = osp.join(osp.dirname(self.filename), path)
         return osp.abspath(path)
 
     def save(self, default=False):

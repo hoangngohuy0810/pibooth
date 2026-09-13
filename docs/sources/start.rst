@@ -49,12 +49,20 @@ Action                  Keyboard key     Physical button       Touch event
 ======================= ================ ===================== =====================
 Toggle Full screen      Ctrl + F         \-                    \-
 Choose layout           LEFT or RIGHT    Button 1 or Button 2  Tap 1 finger
+Browse templates        LEFT or RIGHT    Button 2              Tap screen sides
+Confirm template        ENTER, SPACE, P  Button 1              Tap screen center
 Take pictures           P                Button 1              Tap 1 finger
 Export Printer/Cloud    Ctrl + E         Button 2              Tap 1 finger
 Open/close settings     ESC              Button 1 + Button 2   Tap 4 finger
 Select option           UP or DOWN       Button 1              Tap 1 finger
 Change option value     LEFT or RIGHT    Button 2              Tap 1 finger
 ======================= ================ ===================== =====================
+
+When ``pibooth-picture-template`` is installed and enabled, pibooth displays a
+template preview before the capture sequence. Two starter templates are created
+automatically in ``~/.config/pibooth/templates``. Add other diagrams.net XML
+templates to this directory and they will appear in the chooser on the next
+sequence. The selected template is saved and reused as the default selection.
 
 Configure
 ---------

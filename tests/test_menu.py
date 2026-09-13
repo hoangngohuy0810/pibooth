@@ -7,7 +7,7 @@ from pibooth import language
 from pibooth.counters import Counters
 from pibooth.plugins import create_plugin_manager
 from pibooth.config.parser import PiConfigParser
-from pibooth.config.menu import PiConfigMenu
+from pibooth.config.menu import PiConfigMenu, _find, _selector_values
 from pibooth.view.window import PiWindow
 
 
@@ -40,6 +40,39 @@ def menu(tmpdir):
 
 def process(menu, events=()):
     menu.process(list(events) + list(pygame.event.get()))
+
+
+def test_named_selector_values():
+    values = _selector_values([('Integrated Camera', 0), ('USB Camera', 1)])
+    assert _find(values, '1') == 1
+    assert values[1] == ('USB Camera', 1)
+
+
+def test_named_selector_saves_camera_port():
+    class MainMenuMock(object):
+        @staticmethod
+        def is_enabled():
+            return True
+
+    class ConfigMock(object):
+        def __init__(self):
+            self.saved = None
+
+        def set(self, section, option, value):
+            self.saved = (section, option, value)
+
+    menu = object.__new__(PiConfigMenu)
+    menu._main_menu = MainMenuMock()
+    menu.cfg = ConfigMock()
+    menu._changed = False
+
+    # pygame-menu passes values after the display label as extra positional
+    # arguments to the onchange callback.
+    menu._on_selector_changed((('USB Camera', 1), 1), 1,
+                              section='CAMERA', option='opencv_port')
+
+    assert menu.cfg.saved == ('CAMERA', 'opencv_port', '1')
+    assert menu._changed is True
 
 
 def test_show(menu):

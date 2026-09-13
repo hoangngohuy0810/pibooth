@@ -2,6 +2,7 @@
 
 import os.path as osp
 import pygame
+from PIL.Image import Resampling
 
 from pibooth import fonts, pictures
 from pibooth.language import get_translated_text
@@ -387,6 +388,86 @@ class ChooseBackground(Background):
         if self.arrow_location in [ARROW_TOP, ARROW_BOTTOM]:
             screen.blit(self.left_arrow, self.left_arrow_pos)
             screen.blit(self.right_arrow, self.right_arrow_pos)
+
+
+class TemplateBackground(Background):
+
+    """Modern centered card used to preview one XML picture template."""
+
+    def __init__(self, preview, name, index, total):
+        Background.__init__(self, "template")
+        self.preview = preview
+        self.template_name = name
+        self.index = index
+        self.total = total
+        self.preview_surface = None
+        self.preview_pos = None
+        self.card_rect = None
+        self.labels = []
+        self.left_label = None
+        self.right_label = None
+
+    def __str__(self):
+        return "{}({}-{}-{}-{})".format(self.__class__.__name__, self.template_name,
+                                        self.index, self.total, id(self.preview))
+
+    def resize(self, screen):
+        Background.resize(self, screen)
+        if self._need_update:
+            width, height = self._rect.size
+            max_size = (max(1, int(width * 0.62)), max(1, int(height * 0.50)))
+            image = self.preview.copy()
+            image.thumbnail(max_size, Resampling.LANCZOS)
+            self.preview_surface = pygame.image.fromstring(image.tobytes(), image.size, image.mode)
+            self.preview_pos = self.preview_surface.get_rect(center=(self._rect.centerx,
+                                                                     int(height * 0.43)))
+            self.card_rect = self.preview_pos.inflate(max(18, width // 40), max(18, height // 30))
+
+            name_font = fonts.get_pygame_font(self.template_name, fonts.CURRENT,
+                                               width * 0.58, height * 0.075)
+            name_surface = name_font.render(self.template_name, True, self._text_color)
+            name_rect = name_surface.get_rect(centerx=self._rect.centerx,
+                                              top=self.card_rect.bottom + max(8, height // 50))
+
+            counter = "{} / {}".format(self.index, self.total)
+            counter_font = fonts.get_pygame_font(counter, fonts.CURRENT,
+                                                  width * 0.16, height * 0.055)
+            counter_surface = counter_font.render(counter, True, self._text_color)
+            counter_rect = counter_surface.get_rect(centerx=self._rect.centerx,
+                                                    top=name_rect.bottom + 4)
+
+            hint = "<  >    Enter / Space"
+            hint_font = fonts.get_pygame_font(hint, fonts.CURRENT,
+                                               width * 0.26, height * 0.045)
+            hint_surface = hint_font.render(hint, True, self._text_color)
+            hint_rect = hint_surface.get_rect(centerx=self._rect.centerx,
+                                              bottom=self._rect.bottom - max(8, height // 50))
+            self.labels = [(name_surface, name_rect), (counter_surface, counter_rect),
+                           (hint_surface, hint_rect)]
+
+            arrow_font = fonts.get_pygame_font("<", fonts.CURRENT, width * 0.10, height * 0.20)
+            self.left_label = arrow_font.render("<", True, self._text_color)
+            self.right_label = arrow_font.render(">", True, self._text_color)
+
+    def resize_texts(self):
+        rect = pygame.Rect(self._text_border, self._text_border,
+                           self._rect.width - 2 * self._text_border, self._rect.height * 0.13)
+        Background.resize_texts(self, rect)
+
+    def paint(self, screen):
+        Background.paint(self, screen)
+        shadow = self.card_rect.move(max(4, self._rect.width // 180),
+                                     max(4, self._rect.height // 140))
+        pygame.draw.rect(screen, (0, 0, 0), shadow, border_radius=12)
+        pygame.draw.rect(screen, (245, 245, 245), self.card_rect, border_radius=12)
+        pygame.draw.rect(screen, self._text_color, self.card_rect, width=2, border_radius=12)
+        screen.blit(self.preview_surface, self.preview_pos)
+        for surface, rect in self.labels:
+            screen.blit(surface, rect)
+        screen.blit(self.left_label,
+                    self.left_label.get_rect(center=(self._rect.width * 0.09, self._rect.centery)))
+        screen.blit(self.right_label,
+                    self.right_label.get_rect(center=(self._rect.width * 0.91, self._rect.centery)))
 
 
 class ChosenBackground(Background):

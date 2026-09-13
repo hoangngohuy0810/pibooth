@@ -107,6 +107,7 @@ class PiApplication(object):
         self._machine = StateMachine(self._pm, self._config, self, self._window)
         self._machine.add_state('wait')
         self._machine.add_state('choose')
+        self._machine.add_state('template')
         self._machine.add_state('chosen')
         self._machine.add_state('preview')
         self._machine.add_state('capture')
@@ -120,6 +121,12 @@ class PiApplication(object):
         self.capture_nbr = None
         self.capture_date = None
         self.capture_choices = (4, 1)
+        self.template_library = None
+        self.template_choices = []
+        self.template_index = 0
+        self.template_confirmed = False
+        self.template_startup = False
+        self.template_preselected = False
         self.previous_picture = None
         self.previous_animated = None
         self.previous_picture_file = None
@@ -305,7 +312,7 @@ class PiApplication(object):
         """Return the first found event if found in the list.
         """
         for event in events:
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
+            if event.type == pygame.KEYDOWN and event.key in (pygame.K_p, pygame.K_SPACE):
                 return event
             if (event.type == pygame.MOUSEBUTTONUP and event.button in (1, 2, 3)) or event.type == pygame.FINGERUP:
                 pos = get_event_pos(self._window.display_size, event)
@@ -364,13 +371,42 @@ class PiApplication(object):
                 return event
         return None
 
+    def find_template_event(self, events):
+        """Return a template chooser action from keyboard, touch or buttons."""
+        for event in events:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    return 'previous'
+                if event.key == pygame.K_RIGHT:
+                    return 'next'
+                if event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_p):
+                    return 'confirm'
+            if (event.type == pygame.MOUSEBUTTONUP and event.button in (1, 2, 3)) \
+                    or event.type == pygame.FINGERUP:
+                size = self._window.surface.get_size()
+                pos = get_event_pos(size, event)
+                if pos[0] < size[0] * 0.2:
+                    return 'previous'
+                if pos[0] > size[0] * 0.8:
+                    return 'next'
+                return 'confirm'
+            if event.type == BUTTONDOWN:
+                if event.capture:
+                    return 'confirm'
+                if event.printer:
+                    return 'next'
+        return None
+
     def main_loop(self):
         try:
             fps = 40
             clock = pygame.time.Clock()
             self._initialize()
             self._pm.hook.pibooth_startup(cfg=self._config, app=self)
-            self._machine.set_state('wait')
+            if self.template_startup and self.template_choices:
+                self._machine.set_state('template')
+            else:
+                self._machine.set_state('wait')
 
             while True:
                 events = list(pygame.event.get())

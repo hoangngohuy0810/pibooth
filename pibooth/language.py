@@ -67,6 +67,7 @@ DEFAULT = {
         'intro': "Take a photo",
         'intro_print': "Or you can\nstill print\nthis photo",
         'choose': "Choose your layout",
+        'template': "Choose your template",
         '1': "1 photo",
         '2': "2 photos",
         '3': "3 photos",

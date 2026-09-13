@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import sys
 import time
 import pygame
 try:
@@ -12,11 +13,61 @@ except Exception as ex:
     OPENCV_ERROR = ex
 else:
     OPENCV_ERROR = None
+try:
+    from cv2_enumerate_cameras import enumerate_cameras
+except Exception as ex:
+    enumerate_cameras = None
+    CAMERA_ENUMERATION_ERROR = ex
+else:
+    CAMERA_ENUMERATION_ERROR = None
 from PIL import Image
 from pibooth.pictures import sizing
 from pibooth.utils import PoolingTimer, LOGGER
 from pibooth.language import get_translated_text
 from pibooth.camera.base import BaseCamera
+
+
+def _get_enumeration_backend():
+    """Return the native OpenCV backend used to enumerate camera names."""
+    if sys.platform.startswith('win'):
+        return cv2.CAP_DSHOW
+    if sys.platform == 'darwin':
+        return cv2.CAP_AVFOUNDATION
+    return cv2.CAP_V4L2
+
+
+def get_cv_camera_choices(max_ports=10):
+    """Return ``(display name, OpenCV port)`` choices for the settings menu.
+
+    Camera enumeration is deliberately kept out of module initialization so
+    opening the application does not probe devices until the settings menu is
+    built.  Numeric labels remain available as a safe fallback when OpenCV or
+    the optional enumeration helper cannot list device names.
+    """
+    fallback = [("Camera {}".format(port), port) for port in range(max_ports)]
+    if not cv2 or not enumerate_cameras:
+        LOGGER.debug("Camera name enumeration not available: %s", CAMERA_ENUMERATION_ERROR)
+        return fallback
+
+    try:
+        camera_infos = list(enumerate_cameras(_get_enumeration_backend()))
+    except Exception as ex:
+        LOGGER.warning("Can not enumerate OpenCV camera names: %s", ex)
+        return fallback
+
+    if not camera_infos:
+        return fallback
+
+    names = [str(info.name).strip() or "Camera {}".format(info.index) for info in camera_infos]
+    name_counts = {name: names.count(name) for name in names}
+    occurrences = {}
+    choices = []
+    for name, camera_info in zip(names, camera_infos):
+        if name_counts[name] > 1:
+            occurrences[name] = occurrences.get(name, 0) + 1
+            name = "{} ({})".format(name, occurrences[name])
+        choices.append((name, int(camera_info.index)))
+    return choices
 
 
 def get_cv_camera_proxy(port=None):
@@ -34,12 +85,12 @@ def get_cv_camera_proxy(port=None):
     if port is not None:
         if not isinstance(port, int):
             raise TypeError("Invalid OpenCV camera port '{}'".format(type(port)))
-        camera = cv2.VideoCapture(port)
+        camera = cv2.VideoCapture(port, _get_enumeration_backend())
         if camera.isOpened():
             return camera
     else:
         for i in range(3):  # Test 3 first ports
-            camera = cv2.VideoCapture(i)
+            camera = cv2.VideoCapture(i, _get_enumeration_backend())
             if camera.isOpened():
                 return camera
 

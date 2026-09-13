@@ -227,6 +227,29 @@ def state_choose_exit(cfg, app, win):
     """
 
 
+# --- Template State -----------------------------------------------------------
+
+
+@hookspec
+def state_template_enter(cfg, app, win):
+    """Actions performed when application enters the template chooser."""
+
+
+@hookspec
+def state_template_do(cfg, app, win, events):
+    """Actions performed while choosing a picture template."""
+
+
+@hookspec(firstresult=True)
+def state_template_validate(cfg, app, win, events):
+    """Return the next state name when template selection is complete."""
+
+
+@hookspec
+def state_template_exit(cfg, app, win):
+    """Actions performed when application exits the template chooser."""
+
+
 # --- Chosen State -------------------------------------------------------------
 
 

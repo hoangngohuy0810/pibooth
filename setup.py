@@ -73,6 +73,7 @@ def main():
             'pygame>=1.9.6',
             'pygame-menu>=4.0,<5',
             'pygame-vkeyboard>=2.0.8',
+            'cv2-enumerate-cameras>=1.3.3',
             'psutil>=5.5.1',
             'pluggy>=0.13.1',
             'gpiozero>=1.5.1',

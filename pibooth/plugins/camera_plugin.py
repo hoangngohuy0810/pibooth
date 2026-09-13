@@ -25,7 +25,8 @@ class CameraPlugin(object):
 
         if not cam:
             LOGGER.debug("Fallback to pibooth default camera management system")
-            cam = camera.find_camera()
+            opencv_port = cfg.getint('CAMERA', 'opencv_port') if cfg.has_option('CAMERA', 'opencv_port') else None
+            cam = camera.find_camera(opencv_port=opencv_port)
 
         cam.initialize(cfg.gettuple('CAMERA', 'iso', (int, str), 2),
                        cfg.gettyped('CAMERA', 'resolution'),
@@ -68,7 +69,7 @@ class CameraPlugin(object):
         LOGGER.info("Show preview before next capture")
         if not app.capture_date:
             app.capture_date = time.strftime("%Y-%m-%d-%H-%M-%S")
-        app.camera.preview(win)
+        app.camera.preview(win, flip=cfg.getboolean('CAMERA', 'preview_flip'))
 
     @pibooth.hookimpl
     def state_preview_do(self, cfg, app):

@@ -54,6 +54,16 @@ class LightsPlugin(object):
             app.leds.capture.off()
 
     @pibooth.hookimpl
+    def state_template_enter(self, app):
+        # Capture confirms; printer advances to the next template.
+        app.leds.capture.on()
+        app.leds.printer.blink(on_time=self.blink_time, off_time=self.blink_time)
+
+    @pibooth.hookimpl
+    def state_template_exit(self, app):
+        app.leds.off()
+
+    @pibooth.hookimpl
     def state_chosen_exit(self, app):
         app.leds.off()
 

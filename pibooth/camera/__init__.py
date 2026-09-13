@@ -18,15 +18,18 @@ def close_proxy(rpi2_cam_proxy, gp_cam_proxy, cv_cam_proxy):
         CvCamera(cv_cam_proxy).quit()
 
 
-def find_camera():
+def find_camera(opencv_port=None):
     """Initialize the camera depending of the connected one. The priority order
     is chosen in order to have best rendering during preview and to take captures.
     The gPhoto2 camera is first (drivers most restrictive) to avoid connection
     concurence in case of DSLR compatible with OpenCV.
+
+    :param opencv_port: OpenCV camera port/index to use (None = auto-detect first available)
+    :type opencv_port: int or None
     """
     rpi2_cam_proxy = get_rpi2_camera_proxy()
     gp_cam_proxy = get_gp_camera_proxy()
-    cv_cam_proxy = get_cv_camera_proxy()
+    cv_cam_proxy = get_cv_camera_proxy(port=opencv_port)
 
     if rpi2_cam_proxy and gp_cam_proxy:
         LOGGER.info("Configuring hybrid camera (Picamera2 + gPhoto2) ...")
