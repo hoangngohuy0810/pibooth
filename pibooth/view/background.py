@@ -756,6 +756,14 @@ class FinishedWithImageBackground(FinishedBackground):
                 self._outlines.append((self._make_outlines(right_rect.size), right_rect.topleft))
 
 
+class ReviewBackground(Background):
+
+    """Minimal background that keeps attention on the final picture."""
+
+    def __init__(self):
+        Background.__init__(self, "review")
+
+
 class OopsBackground(Background):
 
     def __init__(self):

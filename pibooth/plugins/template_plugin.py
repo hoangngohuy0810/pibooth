@@ -3,7 +3,7 @@
 """Core UI integration for the optional picture-template plugin."""
 
 import pibooth
-from pibooth.templates import TemplateLibrary
+from pibooth.templates import TemplateLibrary, is_overlay_template
 from pibooth.utils import LOGGER, PoolingTimer
 
 
@@ -26,6 +26,19 @@ class TemplatePlugin(object):
         app.template_confirmed = False
         app.template_startup = bool(app.template_choices)
         app.template_preselected = False
+
+    @pibooth.hookimpl(hookwrapper=True)
+    def pibooth_setup_picture_factory(self, cfg):
+        """Force cover-cropping when a transparent K-Pop frame is selected."""
+        outcome = yield
+        factory = outcome.get_result()
+        try:
+            template_path = cfg.getpath('PICTURE', 'template')
+        except (KeyError, ValueError):
+            template_path = ''
+        if factory is not None and is_overlay_template(template_path):
+            factory.set_cropping(True)
+        outcome.force_result(factory)
 
     @pibooth.hookimpl
     def state_wait_enter(self, app):

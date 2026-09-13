@@ -69,6 +69,7 @@ class PiWindow(object):
         self._print_number = 0
         self._print_failure = False
         self._capture_number = (0, 4)  # (current, max)
+        self._review_text = None
 
         self._pos_map = {self.CENTER: self._center_pos,
                          self.RIGHT: self._right_pos,
@@ -235,6 +236,36 @@ class PiWindow(object):
             self._update_print_number()
         if self._current_foreground:
             self._update_foreground(*self._current_foreground)
+        self._paint_review_overlay()
+
+    def clear_review(self):
+        """Remove the persistent final-picture review overlay."""
+        self._review_text = None
+
+    def _paint_review_overlay(self):
+        if not self._review_text:
+            return
+        rect = self.surface.get_rect()
+        font_size = max(22, int(rect.height * 0.045))
+        try:
+            font = pygame.font.SysFont(['segoeui', 'arial'], font_size, bold=True)
+        except Exception:
+            font = pygame.font.Font(fonts.CURRENT, font_size)
+        label = font.render(self._review_text, True, (255, 255, 255))
+        max_width = int(rect.width * 0.86)
+        if label.get_width() > max_width:
+            font_size = max(16, int(font_size * max_width / label.get_width()))
+            font = pygame.font.SysFont(['segoeui', 'arial'], font_size, bold=True)
+            label = font.render(self._review_text, True, (255, 255, 255))
+        padding_x = max(20, rect.width // 40)
+        padding_y = max(12, rect.height // 45)
+        banner = pygame.Surface((label.get_width() + 2 * padding_x,
+                                 label.get_height() + 2 * padding_y), pygame.SRCALPHA)
+        pygame.draw.rect(banner, (12, 12, 20, 220), banner.get_rect(), border_radius=18)
+        label_rect = label.get_rect(center=banner.get_rect().center)
+        banner.blit(label, label_rect)
+        banner_rect = banner.get_rect(centerx=rect.centerx, bottom=rect.bottom - max(12, rect.height // 35))
+        self.surface.blit(banner, banner_rect)
 
     def show_oops(self):
         """Show failure view in case of exception.
@@ -315,6 +346,15 @@ class PiWindow(object):
             self._update_foreground(pil_image, self.FULLSCREEN)
         else:
             self._update_background(background.FinishedBackground())
+
+    def show_review(self, pil_image, text):
+        """Keep the final picture visible with an explicit continue action."""
+        self._capture_number = (0, self._capture_number[1])
+        self._review_text = None
+        self._update_background(background.ReviewBackground())
+        self._update_foreground(pil_image, self.FULLSCREEN)
+        self._review_text = text
+        self._paint_review_overlay()
 
     @contextlib.contextmanager
     def flash(self, count):

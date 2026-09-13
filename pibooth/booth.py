@@ -397,6 +397,19 @@ class PiApplication(object):
                     return 'next'
         return None
 
+    def find_review_event(self, events):
+        """Return an event when the user explicitly leaves picture review."""
+        for event in events:
+            if event.type == pygame.KEYDOWN and event.key in (
+                    pygame.K_RETURN, pygame.K_SPACE, pygame.K_p, pygame.K_ESCAPE):
+                return event
+            if (event.type == pygame.MOUSEBUTTONUP and event.button in (1, 2, 3)) \
+                    or event.type == pygame.FINGERUP:
+                return event
+            if event.type == BUTTONDOWN and (event.capture or event.printer):
+                return event
+        return None
+
     def main_loop(self):
         try:
             fps = 40

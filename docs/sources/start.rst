@@ -51,7 +51,8 @@ Toggle Full screen      Ctrl + F         \-                    \-
 Choose layout           LEFT or RIGHT    Button 1 or Button 2  Tap 1 finger
 Browse templates        LEFT or RIGHT    Button 2              Tap screen sides
 Confirm template        ENTER, SPACE, P  Button 1              Tap screen center
-Take pictures           P                Button 1              Tap 1 finger
+Leave picture review    ENTER, SPACE, P  Button 1 or Button 2  Tap screen
+Take pictures           P or SPACE       Button 1              Tap 1 finger
 Export Printer/Cloud    Ctrl + E         Button 2              Tap 1 finger
 Open/close settings     ESC              Button 1 + Button 2   Tap 4 finger
 Select option           UP or DOWN       Button 1              Tap 1 finger
@@ -63,6 +64,13 @@ template preview before the capture sequence. Two starter templates are created
 automatically in ``~/.config/pibooth/templates``. Add other diagrams.net XML
 templates to this directory and they will appear in the chooser on the next
 sequence. The selected template is saved and reused as the default selection.
+The bundled ``K-Pop Frame`` designs use a true three-layer composition: a
+background below the captures and a transparent decorative frame above them.
+This allows ribbons, scallops, badges and stickers to overlap photo edges.
+
+By default, the completed picture remains on the review screen until the user
+presses Enter, Space, P, a physical button, or taps the screen. This behavior can
+be disabled with ``[WINDOW][review_picture]`` in the settings menu.
 
 Configure
 ---------

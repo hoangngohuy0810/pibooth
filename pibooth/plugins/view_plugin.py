@@ -27,6 +27,7 @@ class ViewPlugin(object):
         self.print_view_timer = PoolingTimer(0)
         # Seconds to display the selected layout
         self.finish_timer = PoolingTimer(1)
+        self.reviewing = False
 
     @staticmethod
     def _next_after_layout(cfg, app):
@@ -57,6 +58,7 @@ class ViewPlugin(object):
     @pibooth.hookimpl
     def state_wait_enter(self, cfg, app, win):
         self.forgotten = False
+        win.clear_review()
         if cfg.getboolean('WINDOW', 'always_preview', fallback=False) and hasattr(app, 'camera') and app.camera:
             LOGGER.info("Starting Smart Mirror live preview")
             app.camera.preview(win, flip=cfg.getboolean('CAMERA', 'preview_flip'))
@@ -210,18 +212,29 @@ class ViewPlugin(object):
 
     @pibooth.hookimpl
     def state_finish_enter(self, cfg, app, win):
-        if cfg.getfloat('WINDOW', 'finish_picture_delay') > 0 and not self.forgotten:
+        self.reviewing = (cfg.getboolean('WINDOW', 'review_picture')
+                          and not self.forgotten and app.previous_picture is not None)
+        if self.reviewing:
+            win.show_review(app.previous_picture, cfg.get('WINDOW', 'review_picture_text'))
+            self.finish_timer.reset()
+        elif cfg.getfloat('WINDOW', 'finish_picture_delay') > 0 and not self.forgotten:
             win.show_finished(app.previous_picture)
             timeout = cfg.getfloat('WINDOW', 'finish_picture_delay')
         else:
             win.show_finished()
             timeout = 1
 
-        # Reset timeout in case of settings changed
-        self.finish_timer.timeout = timeout
-        self.finish_timer.start()
+        if not self.reviewing:
+            # Reset timeout in case of settings changed
+            self.finish_timer.timeout = timeout
+            self.finish_timer.start()
 
     @pibooth.hookimpl
-    def state_finish_validate(self):
+    def state_finish_validate(self, app, events):
+        if self.reviewing:
+            if app.find_review_event(events):
+                self.reviewing = False
+                return 'wait'
+            return None
         if self.finish_timer.is_timeout():
             return 'wait'
